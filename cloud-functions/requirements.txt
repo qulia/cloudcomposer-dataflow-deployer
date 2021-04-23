@@ -1,0 +1,6 @@
+# Function dependencies, for example:
+# package>=version
+
+requests_toolbelt==0.9.1
+google-auth==1.29.0
+google-cloud-storage

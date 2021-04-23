@@ -1,0 +1,12 @@
+{
+    "template": "gs://hello-dataflow-templates/PubSubToGCS_v1",
+    "job_name": "pubsubtogcs-v1",
+    "parameters": {
+        "suffix" : "world"
+    },
+    "location": "us-west2",
+    "dataflow_default_options": {
+        "temp_location": "gs://hello-artifacts/temp/v1",
+        "staging_location": "gs://hello-artifacts/staging/v1"
+    }
+}
