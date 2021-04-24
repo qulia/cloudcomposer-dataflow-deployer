@@ -5,6 +5,7 @@ source _env/setup.sh
 
 gsutil mb gs://$ARTIFACTS_BUCKET
 gsutil mb gs://$RESULTS_BUCKET
+gsutil mb gs://$DATAFLOW_TEMPLATES_BUCKET
 
 FILE_PATH=../PubSubToGCS.py
 TEMPLATE_NAME=PubSubToGCS_v1

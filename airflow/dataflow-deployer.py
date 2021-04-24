@@ -13,7 +13,6 @@ from airflow.providers.google.cloud.sensors.dataflow import (
     DataflowJobAutoScalingEventsSensor,
     DataflowJobMessagesSensor,
     DataflowJobMetricsSensor,
-    DataflowJobStatusSensor,
 )
 
 from airflow.exceptions import AirflowException
