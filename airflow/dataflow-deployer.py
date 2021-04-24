@@ -18,7 +18,7 @@ from airflow.providers.google.cloud.sensors.dataflow import (
 from airflow.exceptions import AirflowException
 
 with models.DAG(
-    "gcp_dataflow_template_runner",
+    "gcp_dataflow_template_deployer",
     start_date=days_ago(1),
     schedule_interval=None
 ) as dag_template:

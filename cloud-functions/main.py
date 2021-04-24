@@ -8,6 +8,7 @@ import os
 IAM_SCOPE = 'https://www.googleapis.com/auth/iam'
 OAUTH_TOKEN_URI = 'https://www.googleapis.com/oauth2/v4/token'
 
+# Adapted from https://cloud.google.com/composer/docs/how-to/using/triggering-with-gcf
 
 def trigger_dag(data, context=None):
     """Makes a POST request to the Composer DAG Trigger API
