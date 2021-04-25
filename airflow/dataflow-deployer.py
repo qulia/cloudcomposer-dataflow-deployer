@@ -30,18 +30,6 @@ with models.DAG(
         bash_command="echo Triggered from GCF: {{ dag_run.conf }}",
         dag=dag_template)
 
-    def get_options(**kwargs):
-        environment = kwargs['dag_run'].conf['rollout']['to']['environment']
-        custom_parameters = kwargs['dag_run'].conf['rollout']['to']['parameters']
-        Variable.set("custom_parameters", custom_parameters, serialize_json=True)
-        Variable.set("environment", environment, serialize_json=True)
-
-    print_options = PythonOperator(
-        task_id='get_options', 
-        python_callable=get_options, 
-        dag=dag_template, 
-        provide_context=True)
-
     stop_job = DataflowTemplatedJobStopOperator(
         task_id="stop-template-job",
         job_name="{{ dag_run.conf['rollout']['from']['job_name'] }}",
@@ -50,17 +38,30 @@ with models.DAG(
         drain_pipeline=False,
     )
 
-    # https://github.com/apache/airflow/blob/0f327788b5b0887c463cb83dd8f732245da96577/airflow/providers/google/cloud/hooks/dataflow.py#L618
-    start_job = DataflowTemplatedJobStartOperator2(
-        task_id="start-template-job",
-        job_name="{{ dag_run.conf['rollout']['to']['job_name'] }}",
-        append_job_name=False,
-        template="{{ dag_run.conf['rollout']['to']['template'] }}",
-        # https://cloud.google.com/dataflow/docs/reference/rest/v1b3/RuntimeEnvironment
-        environment=Variable.get("environment", deserialize_json=True, default_var="{}"),
-        parameters=Variable.get("custom_parameters", deserialize_json=True, default_var="{}"),
-        location="{{ dag_run.conf['rollout']['to']['location'] }}",
-    )
+    def run_start_operator(**kwargs):
+        job_name = kwargs['dag_run'].conf['rollout']['to']['job_name']
+        template = kwargs['dag_run'].conf['rollout']['to']['template']
+        location = kwargs['dag_run'].conf['rollout']['to']['location']
+        environment = kwargs['dag_run'].conf['rollout']['to']['environment']
+        parameters = kwargs['dag_run'].conf['rollout']['to']['parameters']
+        # https://github.com/apache/airflow/blob/0f327788b5b0887c463cb83dd8f732245da96577/airflow/providers/google/cloud/hooks/dataflow.py#L618
+        start_job_task = DataflowTemplatedJobStartOperator2(
+            task_id="start-template-job",
+            job_name=job_name,
+            append_job_name=False,
+            template=template,
+            # https://cloud.google.com/dataflow/docs/reference/rest/v1b3/RuntimeEnvironment
+            environment=environment,
+            parameters=parameters,
+            location=location,
+        )
+        return start_job_task.execute({})
+
+    start_job = PythonOperator(
+        task_id='start-template-job-call',
+        python_callable=run_start_operator,
+        dag=dag_template,
+        provide_context=True)
 
     # https://github.com/apache/airflow/blob/master/airflow/providers/google/cloud/example_dags/example_dataflow.py
     # [START howto_sensor_wait_for_job_metric]
@@ -81,7 +82,7 @@ with models.DAG(
 
     wait_for_job_metric = DataflowJobMetricsSensor(
         task_id="wait-for-job-metric",
-        job_id="{{task_instance.xcom_pull('start-template-job')['id']}}",
+        job_id="{{task_instance.xcom_pull('start-template-job-call')['id']}}",
         location="{{ dag_run.conf['rollout']['to']['location'] }}",
         callback=check_metric_scalar_gte(metric_name="Service-cpu_num_seconds", value=100),
     )
@@ -97,7 +98,7 @@ with models.DAG(
 
     wait_for_job_message = DataflowJobMessagesSensor(
         task_id="wait-for-job-message",
-        job_id="{{task_instance.xcom_pull('start-template-job')['id']}}",
+        job_id="{{task_instance.xcom_pull('start-template-job-call')['id']}}",
         location="{{ dag_run.conf['rollout']['to']['location'] }}",
         callback=check_message,
     )
@@ -113,14 +114,13 @@ with models.DAG(
 
     wait_for_job_autoscaling_event = DataflowJobAutoScalingEventsSensor(
         task_id="wait-for-job-autoscaling-event",
-        job_id="{{task_instance.xcom_pull('start-template-job')['id']}}",
+        job_id="{{task_instance.xcom_pull('start-template-job-call')['id']}}",
         location="{{ dag_run.conf['rollout']['to']['location'] }}",
         callback=check_autoscaling_event,
     )
     # [END howto_sensor_wait_for_job_autoscaling_event]
 
     print_content >> stop_job
-    print_options >> stop_job
     stop_job >> start_job
     start_job >> wait_for_job_metric
     start_job >> wait_for_job_message
