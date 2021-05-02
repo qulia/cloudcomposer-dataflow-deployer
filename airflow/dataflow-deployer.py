@@ -26,7 +26,7 @@ with models.DAG(
     # The DAG run configuration contains information about the
     # Cloud Storage object change.
     print_content = BashOperator(
-        task_id='print_gcs_info',
+        task_id='print_info',
         bash_command="echo Triggered from GCF: {{ dag_run.conf }}",
         dag=dag_template)
 
