@@ -1,7 +1,7 @@
 # Setup
 
-- Create setup.sh under example/scripts/_env dir as bellow 
-and fill in the empty values and replace the others as needed.
+- Create setup.sh under example/scripts/_env dir as bellow and fill in the empty values and replace the others as
+  needed.
 
 ```
 #!/bin/bash
@@ -25,6 +25,7 @@ export CLOUD_COMPOSER_WEBSERVER_ID=
 
 export DAG_NAME=gcp_dataflow_template_runner
 ```
+
 - Run the following commands for one time setup of the example.
 
 ```
@@ -42,9 +43,9 @@ cd example/scripts
 ./dag-deploy-validate.sh
 ```
 
-# Trigger 
+# Trigger
 
-Deploy and each time you need to deploy config/code updates use the following. 
+Deploy and each time you need to deploy config/code updates use the following.
 
 ```
 # Trigger the dag to deploy, updating rollout.json accordingly

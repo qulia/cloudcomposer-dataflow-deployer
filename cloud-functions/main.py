@@ -1,12 +1,13 @@
-
 from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 import requests
 from google.cloud import storage
 import json
 import os
+
 IAM_SCOPE = 'https://www.googleapis.com/auth/iam'
 OAUTH_TOKEN_URI = 'https://www.googleapis.com/oauth2/v4/token'
+
 
 # Adapted from https://cloud.google.com/composer/docs/how-to/using/triggering-with-gcf
 

@@ -23,6 +23,8 @@ import random
 from apache_beam import DoFn, GroupByKey, io, ParDo, Pipeline, PTransform, WindowInto, WithKeys
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.transforms.window import FixedWindows
+
+
 # from apache_beam.options.value_provider import RuntimeValueProvider
 
 class GroupMessagesByFixedWindows(PTransform):
@@ -36,17 +38,17 @@ class GroupMessagesByFixedWindows(PTransform):
         self.num_shards = num_shards
 
     def expand(self, pcoll):
-         return (
-            pcoll
-            # Bind window info to each element using element timestamp (or publish time).
-            | "Window into fixed intervals"
-            >> WindowInto(FixedWindows(self.window_size))
-            | "Add timestamp to windowed elements" >> ParDo(AddTimestamp())
-            # Assign a random key to each windowed element based on the number of shards.
-            | "Add key" >> WithKeys(lambda _: random.randint(0, self.num_shards - 1))
-            # Group windowed elements by key. All the elements in the same window must fit
-            # memory for this. If not, you need to use `beam.util.BatchElements`.
-            | "Group by key" >> GroupByKey()
+        return (
+                pcoll
+                # Bind window info to each element using element timestamp (or publish time).
+                | "Window into fixed intervals"
+                >> WindowInto(FixedWindows(self.window_size))
+                | "Add timestamp to windowed elements" >> ParDo(AddTimestamp())
+                # Assign a random key to each windowed element based on the number of shards.
+                | "Add key" >> WithKeys(lambda _: random.randint(0, self.num_shards - 1))
+                # Group windowed elements by key. All the elements in the same window must fit
+                # memory for this. If not, you need to use `beam.util.BatchElements`.
+                | "Group by key" >> GroupByKey()
         )
 
 
@@ -62,14 +64,15 @@ class AddTimestamp(DoFn):
             ),
         )
 
+
 class UserOptions(PipelineOptions):
     @classmethod
     def _add_argparse_args(cls, parser):
         parser.add_argument(
             "--input_topic",
             help="The Cloud Pub/Sub topic to read from."
-            '"projects/<PROJECT_ID>/topics/<TOPIC_ID>".',
-            )
+                 '"projects/<PROJECT_ID>/topics/<TOPIC_ID>".',
+        )
         parser.add_argument(
             "--window_size",
             type=float,
@@ -87,8 +90,9 @@ class UserOptions(PipelineOptions):
             help="Number of shards to use when writing windowed elements to GCS.",
         )
         parser.add_value_provider_argument(
-            '--suffix', 
+            '--suffix',
             type=str)
+
 
 class WriteToGCS(DoFn):
     def __init__(self, output_path):
@@ -107,17 +111,18 @@ class WriteToGCS(DoFn):
             for message_body, publish_time in batch:
                 f.write(f"{message_body},{publish_time}\n".encode("utf-8"))
 
+
 class AppendFn(DoFn):
     def __init__(self, suffix):
-      self.suffix = suffix
+        self.suffix = suffix
 
     def process(self, word):
-      # Workaround for RuntimeValueProvider streaming mode issue, it works in batch but not when streaming enabled
-      # https://stackoverflow.com/questions/66407485/runtimevalueprovider-in-dataflow-streaming-engine-apache-beam-error-runtimevalu
-      logging.info(f"options: {json.loads(os.environ['PIPELINE_OPTIONS'])}")
-      suffix = json.loads(os.environ['PIPELINE_OPTIONS'])['options']['suffix']
-      logging.info(f"contents: {word.decode('utf-8')} {suffix}")
-      yield f"{word.decode('utf-8')} {suffix}".encode('utf-8')
+        # Workaround for RuntimeValueProvider streaming mode issue, it works in batch but not when streaming enabled
+        # https://stackoverflow.com/questions/66407485/runtimevalueprovider-in-dataflow-streaming-engine-apache-beam-error-runtimevalu
+        logging.info(f"options: {json.loads(os.environ['PIPELINE_OPTIONS'])}")
+        suffix = json.loads(os.environ['PIPELINE_OPTIONS'])['options']['suffix']
+        logging.info(f"contents: {word.decode('utf-8')} {suffix}")
+        yield f"{word.decode('utf-8')} {suffix}".encode('utf-8')
 
 
 def run():
@@ -127,15 +132,15 @@ def run():
     user_options = pipeline_options.view_as(UserOptions)
     with Pipeline(options=pipeline_options) as pipeline:
         (
-            pipeline
-            # Because `timestamp_attribute` is unspecified in `ReadFromPubSub`, Beam
-            # binds the publish time returned by the Pub/Sub server for each message
-            # to the element's timestamp parameter, accessible via `DoFn.TimestampParam`.
-            # https://beam.apache.org/releases/pydoc/current/apache_beam.io.gcp.pubsub.html#apache_beam.io.gcp.pubsub.ReadFromPubSub
-            | "Read from Pub/Sub" >> io.ReadFromPubSub(topic=user_options.input_topic)
-            | "Append suffix" >> ParDo(AppendFn(user_options.suffix))
-            | "Window into" >> GroupMessagesByFixedWindows(user_options.window_size, user_options.num_shards)
-            | "Write to GCS" >> ParDo(WriteToGCS(user_options.output_path))
+                pipeline
+                # Because `timestamp_attribute` is unspecified in `ReadFromPubSub`, Beam
+                # binds the publish time returned by the Pub/Sub server for each message
+                # to the element's timestamp parameter, accessible via `DoFn.TimestampParam`.
+                # https://beam.apache.org/releases/pydoc/current/apache_beam.io.gcp.pubsub.html#apache_beam.io.gcp.pubsub.ReadFromPubSub
+                | "Read from Pub/Sub" >> io.ReadFromPubSub(topic=user_options.input_topic)
+                | "Append suffix" >> ParDo(AppendFn(user_options.suffix))
+                | "Window into" >> GroupMessagesByFixedWindows(user_options.window_size, user_options.num_shards)
+                | "Write to GCS" >> ParDo(WriteToGCS(user_options.output_path))
         )
 
 
@@ -144,4 +149,3 @@ if __name__ == "__main__":
 
     run()
 # [END pubsub_to_gcs]
-

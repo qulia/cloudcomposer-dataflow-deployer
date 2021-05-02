@@ -8,6 +8,7 @@ from airflow.providers.google.cloud.hooks.dataflow import (
 )
 from airflow.utils.decorators import apply_defaults
 
+
 class DataflowTemplatedJobStopOperator(BaseOperator):
     template_fields = [
         "job_name",
@@ -16,6 +17,7 @@ class DataflowTemplatedJobStopOperator(BaseOperator):
         "gcp_conn_id",
     ]
     ui_color = "#F7D57A"
+
     @apply_defaults
     def __init__(  # pylint: disable=too-many-arguments
             self,
@@ -69,6 +71,7 @@ class DataflowTemplatedJobStopOperator(BaseOperator):
 
     def on_kill(self) -> None:
         self.log.info("On kill.")
+
 
 # Current implementation does not pass append_job_name to the hook method
 # https://github.com/apache/airflow/blob/master/airflow/providers/google/cloud/operators/dataflow.py#L691

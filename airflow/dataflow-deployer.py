@@ -18,9 +18,9 @@ from airflow.providers.google.cloud.sensors.dataflow import (
 from airflow.exceptions import AirflowException
 
 with models.DAG(
-    "gcp_dataflow_template_deployer",
-    start_date=days_ago(1),
-    schedule_interval=None
+        "gcp_dataflow_template_deployer",
+        start_date=days_ago(1),
+        schedule_interval=None
 ) as dag_template:
     # Print the received dag_run configuration.
     # The DAG run configuration contains information about the
@@ -37,6 +37,7 @@ with models.DAG(
         location="{{ dag_run.conf['rollout']['from']['location'] }}",
         drain_pipeline=False,
     )
+
 
     def run_start_operator(**kwargs):
         job_name = kwargs['dag_run'].conf['rollout']['to']['job_name']
@@ -57,11 +58,13 @@ with models.DAG(
         )
         return start_job_task.execute({})
 
+
     start_job = PythonOperator(
         task_id='start-template-job-call',
         python_callable=run_start_operator,
         dag=dag_template,
         provide_context=True)
+
 
     # https://github.com/apache/airflow/blob/master/airflow/providers/google/cloud/example_dags/example_dataflow.py
     # [START howto_sensor_wait_for_job_metric]
@@ -80,12 +83,15 @@ with models.DAG(
 
         return callback
 
+
     wait_for_job_metric = DataflowJobMetricsSensor(
         task_id="wait-for-job-metric",
         job_id="{{task_instance.xcom_pull('start-template-job-call')['id']}}",
         location="{{ dag_run.conf['rollout']['to']['location'] }}",
         callback=check_metric_scalar_gte(metric_name="Service-cpu_num_seconds", value=100),
     )
+
+
     # [END howto_sensor_wait_for_job_metric]
 
     # [START howto_sensor_wait_for_job_message]
@@ -96,12 +102,15 @@ with models.DAG(
                 return True
         return False
 
+
     wait_for_job_message = DataflowJobMessagesSensor(
         task_id="wait-for-job-message",
         job_id="{{task_instance.xcom_pull('start-template-job-call')['id']}}",
         location="{{ dag_run.conf['rollout']['to']['location'] }}",
         callback=check_message,
     )
+
+
     # [END howto_sensor_wait_for_job_message]
 
     # [START howto_sensor_wait_for_job_autoscaling_event]
@@ -111,6 +120,7 @@ with models.DAG(
             if "Worker pool started." in autoscaling_event.get("description", {}).get("messageText", ""):
                 return True
         return False
+
 
     wait_for_job_autoscaling_event = DataflowJobAutoScalingEventsSensor(
         task_id="wait-for-job-autoscaling-event",
