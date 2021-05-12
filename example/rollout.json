@@ -4,6 +4,7 @@
       "project_id": "dataflow-airflow",
       "template": "gs://pubsub-to-gcs-dataflow-templates/PubSubToGCS_v1",
       "job_name": "pubsub-to-gcs-v1",
+      "drain_pipeline": false,
       "parameters": {
         "suffix": "world"
       },
@@ -18,6 +19,7 @@
       "project_id": "dataflow-airflow",
       "template": "gs://pubsub-to-gcs-dataflow-templates/PubSubToGCS_v2",
       "job_name": "pubsub-to-gcs-v2",
+      "drain_pipeline": false,
       "parameters": {
         "suffix": "world2"
       },

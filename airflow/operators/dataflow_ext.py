@@ -105,6 +105,7 @@ class DataflowTemplatedJobStartOperator2(BaseOperator):
             delegate_to: Optional[str] = None,
             poll_sleep: int = 10,
             impersonation_chain: Optional[Union[str, Sequence[str]]] = None,
+            drain_pipeline: bool = False,
             environment: Optional[Dict] = None,
             cancel_timeout: Optional[int] = 10 * 60,
             wait_until_finished: Optional[bool] = None,
@@ -125,6 +126,7 @@ class DataflowTemplatedJobStartOperator2(BaseOperator):
         self.job_id = None
         self.hook: Optional[DataflowHook] = None
         self.impersonation_chain = impersonation_chain
+        self.drain_pipeline = drain_pipeline
         self.environment = environment
         self.cancel_timeout = cancel_timeout
         self.wait_until_finished = wait_until_finished
@@ -135,6 +137,7 @@ class DataflowTemplatedJobStartOperator2(BaseOperator):
             delegate_to=self.delegate_to,
             poll_sleep=self.poll_sleep,
             impersonation_chain=self.impersonation_chain,
+            drain_pipeline = self.drain_pipeline,
             cancel_timeout=self.cancel_timeout,
             wait_until_finished=self.wait_until_finished,
         )
